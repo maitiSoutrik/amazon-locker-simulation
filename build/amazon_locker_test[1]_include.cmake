@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/LockerDeliverySystem/build/amazon_locker_test[1]_tests.cmake")
+  include("/home/runner/LockerDeliverySystem/build/amazon_locker_test[1]_tests.cmake")
+else()
+  add_test(amazon_locker_test_NOT_BUILT amazon_locker_test_NOT_BUILT)
+endif()
