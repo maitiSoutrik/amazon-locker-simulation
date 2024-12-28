@@ -1,9 +1,23 @@
-
 cmake_minimum_required(VERSION 3.10)
 project(amazon_locker)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Enable testing
+enable_testing()
+
+# Add compiler warnings
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
+
+# Code coverage option
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+endif()
 
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bins)

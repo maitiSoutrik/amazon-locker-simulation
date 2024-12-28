@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential clang
+
+    - name: Cache Build
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/cmake
+          build
+        key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-
+
+    - name: Configure CMake
+      env:
+        CC: ${{ matrix.compiler == 'gcc' && 'gcc' || 'clang' }}
+        CXX: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Run Tests
+      working-directory: build
+      run: ctest -C ${{ matrix.build_type }} --output-on-failure
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: amazon-locker-${{ matrix.compiler }}-${{ matrix.build_type }}
+        path: build/app/amazon-locker

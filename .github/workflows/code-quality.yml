@@ -1,0 +1,66 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck clang-tidy
+
+    - name: Run Cppcheck
+      run: |
+        cppcheck --enable=all --suppress=missingIncludeSystem --error-exitcode=1 \
+        src/ include/ app/ tests/
+
+    - name: Install Clang Tools
+      run: |
+        sudo apt-get install -y clang-tools
+
+    - name: Generate Compilation Database
+      run: |
+        cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        
+    - name: Run Clang-Tidy
+      run: |
+        find src include app tests -name '*.cpp' -o -name '*.h' | \
+        xargs clang-tidy -p build
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lcov
+
+    - name: Configure CMake with Coverage
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Run Tests with Coverage
+      working-directory: build
+      run: |
+        ctest --output-on-failure
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+
+    - name: Upload Coverage Report
+      uses: codecov/codecov-action@v3
+      with:
+        files: build/coverage.info
+        fail_ci_if_error: true
