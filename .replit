@@ -1,6 +1,6 @@
 
 run = ["sh", "-c", "mkdir -p build && cd build && cmake .. && make && ./amazon_locker"]
-modules = ["python-3.11"]
+modules = ["python-3.11", "cpp-20"]
 
 [nix]
 channel = "stable-22_11"
@@ -19,3 +19,65 @@ languageServer = { start = ["clangd"] }
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build and Run"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run Tests"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Amazon Locker Service"
+
+[[workflows.workflow]]
+name = "Build and Run"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p build && cd build && cmake .. && make && cd .. && ./bins/amazon_locker"
+
+[[workflows.workflow]]
+name = "Run Tests"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd build && ctest --output-on-failure"
+
+[[workflows.workflow]]
+name = "Amazon Locker Service"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p build && cd build && cmake -DREPLIT_DEPLOYMENT=1 .. && make && cd .. && ./bins/amazon_locker"

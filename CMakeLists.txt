@@ -32,3 +32,10 @@ include_directories(
 # Add subdirectories
 add_subdirectory(app)
 add_subdirectory(tests)
+
+# Deployment configuration
+if(DEFINED ENV{REPLIT_DEPLOYMENT})
+    message(STATUS "Configuring for Replit deployment")
+    set(CMAKE_BUILD_TYPE Release)
+    add_compile_definitions(DEPLOYMENT_ENV="replit")
+endif()
